@@ -1,4 +1,4 @@
-# Word Puzzles (Java)
+# Word Puzzles
 
 A collection of classic word-based console games built in Java — including Wordle, Spelling Bee, and Anagrams — all playable from a single interactive menu.
 
@@ -18,8 +18,8 @@ A collection of classic word-based console games built in Java — including Wor
 ## How to Run
 
 ### 1) Clone the repo
-git clone https://github.com/AdamMirmina/WordPuzzles-Java.git
-cd WordPuzzles-Java
+git clone https://github.com/AdamMirmina/WordPuzzles.git
+cd WordPuzzles
 
 ### 2) Compile
 #### Windows (PowerShell)
