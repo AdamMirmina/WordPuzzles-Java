@@ -16,5 +16,5 @@ A collection of classic word-based console games built in Java — including Wor
 - File I/O for loading word lists and puzzles
 
 ## How to Run
-Clone this repository: https://github.com/AdamMirmina/WordPuzzles-Java.git
-Compile and run `Driver.java` from the command line or your IDE of choice to start the game.
+- Clone this repository: https://github.com/AdamMirmina/WordPuzzles-Java.git
+- Compile and run `Driver.java` from the command line or your IDE of choice to start the game.
