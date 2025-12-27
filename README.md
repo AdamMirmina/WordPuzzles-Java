@@ -16,5 +16,23 @@ A collection of classic word-based console games built in Java — including Wor
 - File I/O for loading word lists and puzzles
 
 ## How to Run
-- Clone this repository: https://github.com/AdamMirmina/WordPuzzles-Java.git
-- Compile and run `src/Driver.java` from the command line or your IDE of choice to start the game.
+
+### 1) Clone the repo
+git clone https://github.com/AdamMirmina/WordPuzzles-Java.git
+cd WordPuzzles-Java
+
+### 2) Compile
+#### Windows (PowerShell)
+javac .\src\*.java
+
+#### macOS/Linux (Terminal)
+javac src/*.java
+
+### 3) Run
+> Run from the project root (this folder) so the game can find the word list files (`WordleWords`, `WordleGuessable`, `SpellingBee`, `Anagrams`).
+
+#### Windows (PowerShell)
+java -cp .\src Driver
+
+#### macOS/Linux (Terminal)
+java -cp src Driver
