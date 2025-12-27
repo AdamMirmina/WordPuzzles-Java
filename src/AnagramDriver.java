@@ -3,18 +3,16 @@ import java.io.*;
 
 // Driver for Anagrams game; chooses an anagram from the text file, presents it to the user,
 // determines win/loss status, and keeps track of the user's times
-public class AnagramDriver
-{
+public class AnagramDriver {
 
     private static int latestTime; // User's latest time
-    private static String latestTimeDisplay = ""; // // Displays the user's latest time in mm:ss format
+    private static String latestTimeDisplay = ""; // Displays the user's latest time in mm:ss format
     public static String getLatestTimeDisplay() {
         return (latestTimeDisplay.equals("") ? "00:00" : latestTimeDisplay);
     }
 
     private static int bestTime = 0; // User's best time
     private static String bestTimeDisplay = ""; // Displays the user's best time in mm:ss format
-
     public static String getBestTimeDisplay() {
         return (bestTimeDisplay.equals("") ? "00:00" : bestTimeDisplay);
     }
@@ -27,101 +25,122 @@ public class AnagramDriver
     private static int shufflesAvailable = 0;
     private static int hintsAvailable = 0;
 
-    private static String[][] words = new String[80][5]; // 2D array with scrambled and unscrambled words
+    private static final int MAX_WORDS = 80;
+    private static final int COLS = 5;
+    private static String[][] words = new String[MAX_WORDS][COLS]; // 2D array with scrambled and unscrambled words
+    private static int loadedCount = 0; // how many valid rows were loaded from the file
 
     private static boolean winCondition = false; // Is set to true if user unscrambles the word
     public static void changeWinCondition() {
         winCondition = !winCondition;
     }
 
-    private static ArrayList<Integer> blackList = new ArrayList<>(); // Indices of anagrams that have already been chosen
-                                                             // are added here to ensure they are not repeated by accident
+    private static final ArrayList<Integer> blackList = new ArrayList<>(); // prevent repeats
+    private static final Scanner keyboard = new Scanner(System.in);
 
     // Collects user String input
     public static String userInput() {
-        Scanner keyboard = new Scanner(System.in);
         return keyboard.nextLine();
     }
 
-    // Loads words into words
-    public static void loadWords() {
-        try {
-            BufferedReader br = new BufferedReader(new FileReader("Anagrams"));
-            String line;
-            int i = 0;
-            while ((line = br.readLine()) != null) {
-                words[i] = line.split(" ");
-                i++;
-            }
+    // Loads words into words[][]; returns true if at least 1 row loaded
+    public static boolean loadWords() {
+        loadedCount = 0;
 
+        try (BufferedReader br = new BufferedReader(new FileReader("Anagrams"))) {
+            String line;
+            while ((line = br.readLine()) != null && loadedCount < MAX_WORDS) {
+                line = line.trim();
+                if (line.isEmpty()) continue;
+
+                String[] parts = line.split(" ");
+                // Expect exactly 5 tokens per line (0..4). Skip malformed lines.
+                if (parts.length < COLS) continue;
+
+                words[loadedCount] = parts;
+                loadedCount++;
+            }
         } catch (IOException e) {
             System.out.println("File not found.");
+            return false;
         }
+
+        if (loadedCount == 0) {
+            System.out.println("No anagrams loaded (file may be empty or malformed).");
+            return false;
+        }
+        return true;
     }
 
-    // Chooses a random anagram from the text file
+    // Chooses a random anagram from the loaded words
     public static void chooseWord() {
-        if (Driver.demo) {
+        // If demo expects a specific row, only use it if it exists in the loaded data.
+        if (Driver.demo && loadedCount > 21 && words[21] != null && words[21].length >= COLS) {
             word = words[21][4]; // Defiant
             puzzleRow = 21;
-            blackList.add(21);
-        } else {
-            int rand = (int) (Math.random() * 80); // Generates a random index 0-80
-            if (blackList.size() == 80)
-                blackList.clear();
-            while (blackList.contains(rand))
-                rand = (int) (Math.random() * 80);
-            word = words[rand][4];
-            puzzleRow = rand;
-            blackList.add(puzzleRow);
+            if (!blackList.contains(21)) blackList.add(21);
+            return;
         }
+
+        // Normal mode: choose from rows actually loaded
+        if (blackList.size() >= loadedCount) blackList.clear();
+
+        int rand = (int) (Math.random() * loadedCount); // 0..loadedCount-1
+        while (blackList.contains(rand)) {
+            rand = (int) (Math.random() * loadedCount);
+        }
+
+        puzzleRow = rand;
+        word = words[puzzleRow][4];
+        blackList.add(puzzleRow);
     }
 
     // Gives a hint to the player and updates hintsAvailable
     public static void giveHint() {
-        if (hintsAvailable == 0)
+        if (hintsAvailable == 0) {
             System.out.println(Driver.RESET + "No more hints available!");
-        // Prints either the first, first and second, or first / second / third characters of the correct word
-        else {
-            System.out.println(Driver.BOLD + Driver.ORANGE);
-            switch (hintsAvailable) {
-                case 3:
-                    System.out.print(Driver.BOLD + Driver.ORANGE + words[puzzleRow][4].substring(0, 1));
-                    System.out.println(Driver.RESET + "                          Hints remaining: 2");
-                    break;
-                case 2:
-                    System.out.print(Driver.BOLD + Driver.ORANGE + words[puzzleRow][4].substring(0, 2));
-                    System.out.println(Driver.RESET + "                         Hints remaining: 1");
-                    break;
-                case 1:
-                    System.out.print(Driver.BOLD + Driver.ORANGE + words[puzzleRow][4].substring(0, 3));
-                    System.out.println(Driver.RESET + "                        Hints remaining: 0");
-                }
-            hintsAvailable--;
-            }
+            return;
         }
+
+        System.out.println(Driver.BOLD + Driver.ORANGE);
+        switch (hintsAvailable) {
+            case 3:
+                System.out.print(Driver.BOLD + Driver.ORANGE + words[puzzleRow][4].substring(0, 1));
+                System.out.println(Driver.RESET + "                          Hints remaining: 2");
+                break;
+            case 2:
+                System.out.print(Driver.BOLD + Driver.ORANGE + words[puzzleRow][4].substring(0, 2));
+                System.out.println(Driver.RESET + "                         Hints remaining: 1");
+                break;
+            case 1:
+                System.out.print(Driver.BOLD + Driver.ORANGE + words[puzzleRow][4].substring(0, 3));
+                System.out.println(Driver.RESET + "                        Hints remaining: 0");
+                break;
+        }
+        hintsAvailable--;
+    }
 
     // Shuffles the letters and updates shufflesAvailable
     public static void shuffle() {
-        if (shufflesAvailable == 0)
+        if (shufflesAvailable == 0) {
             System.out.println(Driver.RESET + "No more shuffles available!");
-
-        // Prints the applicable anagram from words array
-        else {
-            System.out.print(Driver.BOLD + Driver.ORANGE);
-            switch (shufflesAvailable) {
-                case 3:
-                    System.out.print(words[puzzleRow][1]);
-                    break;
-                case 2:
-                    System.out.print(words[puzzleRow][2]);
-                    break;
-                case 1:
-                    System.out.print(words[puzzleRow][3]);
-            }
-            shufflesAvailable--;
-            System.out.println(Driver.RESET + "                    Shuffles remaining: " + shufflesAvailable);
+            return;
         }
+
+        System.out.print(Driver.BOLD + Driver.ORANGE);
+        switch (shufflesAvailable) {
+            case 3:
+                System.out.print(words[puzzleRow][1]);
+                break;
+            case 2:
+                System.out.print(words[puzzleRow][2]);
+                break;
+            case 1:
+                System.out.print(words[puzzleRow][3]);
+                break;
+        }
+        shufflesAvailable--;
+        System.out.println(Driver.RESET + "                    Shuffles remaining: " + shufflesAvailable);
     }
 
     // Displays feedback upon user successfully unscrambling the word
@@ -148,6 +167,7 @@ public class AnagramDriver
                 latestTime += 10;
             else if (shufflesAvailable == 0)
                 latestTime += 15;
+
             latestTimeDisplay = Driver.formatTime(latestTime);
             System.out.println("Final time including penalties: " + Driver.BOLD + Driver.ORANGE + latestTimeDisplay + Driver.RESET);
         }
@@ -161,7 +181,7 @@ public class AnagramDriver
         }
 
         if (latestTime == bestTime)
-            System.out.println(Driver.BOLD + Driver.ORANGE + "New personal best!");
+            System.out.println(Driver.BOLD + Driver.ORANGE + "New personal best!" + Driver.RESET);
 
         System.out.println(Driver.RESET + "Play again? Enter 'yes' or 'menu'");
         String response = userInput();
@@ -181,13 +201,16 @@ public class AnagramDriver
         playAgain = false;
         hintsAvailable = 3;
         shufflesAvailable = 3;
-        loadWords();
+
+        // If file missing / empty, exit this game cleanly instead of crashing later
+        if (!loadWords()) return;
+
         chooseWord();
         TimerThread.reset();
         TimerThread.run();
 
         System.out.println(Driver.BLACKBG);
-        System.out.println(Driver.ORANGE + Driver.BOLD + Driver.BLACKBG + "  ANAGRAMS");
+        System.out.println(Driver.ORANGE + Driver.BOLD + Driver.BLACKBG + "  ANAGRAMS" + Driver.RESET);
         System.out.println(Driver.RESET + Driver.BLACKBG + "  Unscramble the word.");
         System.out.println("  Enter 's' to shuffle (5 second time penalty).");
         System.out.println("  Enter 'h' for hint (10 second time penalty).");
@@ -202,20 +225,21 @@ public class AnagramDriver
         // Runs the game by appropriately handling user input until win condition is reached
         while (!winCondition) {
             String guess = userInput();
+
             if (guess.toLowerCase().equals("menu")) {
                 playAgain = false;
                 return;
-            }
-            else if (guess.toLowerCase().equals(word)) {
+            } else if (guess.toLowerCase().equals(word)) {
                 winCondition();
                 return;
-            }
-            else if (guess.toLowerCase().equals("h"))
+            } else if (guess.toLowerCase().equals("h")) {
                 giveHint();
-            else if (guess.toLowerCase().equals("s"))
+            } else if (guess.toLowerCase().equals("s")) {
                 shuffle();
-            else
-                System.out.println(Driver.RESET + Driver.RED + "Incorrect word.");
+            } else {
+                // IMPORTANT: reset after printing colored text so color doesn't "leak" to later lines
+                System.out.println(Driver.RED + "Incorrect word." + Driver.RESET);
+            }
         }
     }
 }
