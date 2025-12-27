@@ -197,7 +197,7 @@ public class AnagramDriver
         System.out.println("  Hints remaining: 3");
         Driver.clearScreen(9);
         System.out.println(Driver.BLACKBG + "Your word:" + Driver.RESET + " "
-                + Driver.ORANGE + Driver.BOLD + words[puzzleRow][0]);
+                + Driver.ORANGE + Driver.BOLD + words[puzzleRow][0] + Driver.RESET);
 
         // Runs the game by appropriately handling user input until win condition is reached
         while (!winCondition) {
